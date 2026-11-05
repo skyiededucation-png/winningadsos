@@ -483,6 +483,25 @@ pre.prompt{background:var(--sunk)}
 .lg-card h2{margin:4px 0 0;font-size:24px;font-weight:700;letter-spacing:-.02em}
 .lg-card input{width:100%;border:1px solid transparent;border-radius:14px;padding:12px 14px;background:var(--sunk);font-size:17px;color:var(--ink);text-align:center}
 .lg-card input:focus{outline:none;background:var(--card);border-color:var(--accent);box-shadow:0 0 0 4px var(--accent-soft)}
+.refs{background:var(--sunk);border-radius:18px;padding:14px;margin:-8px 0 20px;display:flex;flex-direction:column;gap:12px}
+.refs-hd{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center}.refs-hd b{font-size:15px}
+.refs-hd select{background:var(--card);border:0;border-radius:9999px;padding:7px 12px;color:var(--ink)}
+.refs-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.ref{background:var(--card);border-radius:14px;padding:8px;display:flex;flex-direction:column;gap:6px;animation:pop .4s var(--spring) both}
+.ref img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:10px;background:var(--sunk)}
+.ref select,.ref input{border:0;border-radius:8px;background:var(--sunk);padding:5px 8px;font-size:13px;color:var(--ink);width:100%}
+.rpick{display:flex;flex-direction:column;gap:6px;margin-top:6px}.rpick > span{font-size:12px;font-weight:500;color:var(--muted)}
+.rpick > div{display:flex;flex-wrap:wrap;gap:6px}
+.rchip{display:flex;align-items:center;gap:6px;border:1.5px solid transparent;background:var(--sunk);border-radius:9999px;padding:3px 10px 3px 3px;font-size:12px;color:var(--ink);transition:all .2s var(--ease);max-width:160px}
+.rchip img{width:24px;height:24px;border-radius:50%;object-fit:cover;flex:none}.rchip span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rchip.on{border-color:var(--accent);background:var(--accent-soft);font-weight:600}.rchip:active{transform:scale(.94)}
+.copy{display:flex;flex-direction:column;gap:8px;background:var(--sunk);border-radius:14px;padding:12px;margin-top:4px}
+.copy-hd{display:flex;flex-direction:column;gap:4px;align-items:flex-start}
+.copy-f{display:grid;grid-template-columns:1fr auto;gap:4px 8px;align-items:start}
+.copy-f > span{grid-column:1/-1;font-size:11.5px;font-weight:600;color:var(--muted)}
+.copy-f pre{margin:0;white-space:pre-wrap;font:inherit;font-size:13px;line-height:1.55;color:var(--ink);background:var(--card);border-radius:10px;padding:8px 10px;max-height:220px;overflow:auto}
+.copy-act{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.copy-act select{background:var(--card);border:0;border-radius:9999px;padding:5px 10px;font-size:13px;color:var(--ink)}
 </style>
 </head>
 <body>
@@ -1008,7 +1027,7 @@ function renderJobs(js) {
   if (js.length && !active.length && !errs.length && $("#jobs").dataset.hide !== "1") renderJobs.t = setTimeout(() => { $("#jobs").dataset.hide = "1"; $("#jobs").hidden = true; }, 3000);
   $("#jobs").hidden = !js.length || $("#jobs").dataset.hide === "1";
   $("#jobsTitle").innerHTML = active.length ? `<span class="spin"></span> ${active.length} 个任务进行中` : errs.length ? `<span class="pill bad">${errs.length} 个失败</span>` : "全部完成";
-  const name = { draft: "草稿", variant: "Variants", upscale: "Upscale", content: "内容卡", persona: "Persona" };
+  const name = { draft: "草稿", variant: "Variants", upscale: "Upscale", content: "内容卡", persona: "Persona", copy: "写文案" };
   $("#jobList").innerHTML = js.slice(0, 30).map((j) => `<div class="j"><span>${j.status === "running" ? '<span class="spin"></span>' : j.status === "done" ? "✓" : j.status === "error" ? "✕" : "·"}</span>
     <span><b>${esc(j.rowId)}</b> · ${name[j.type]} × ${j.n}${j.error ? `<div class="err">${esc(j.error)}</div>` : ""}</span>
     <span class="note">${j.status === "done" ? Math.round((j.endedAt - j.startedAt) / 1000) + "s" : j.status === "queued" ? "排队" : j.status === "running" ? "生成中" : ""}</span></div>`).join("");
@@ -1205,6 +1224,7 @@ function renderContent(force) {
     <section class="card" id="briefCard">
       <div class="hd"><span class="step">1</span><h2>基础资料</h2><span class="note">让 AI 知道你卖什么、价值在哪里。<span class="req">*</span> 必填。</span><span class="sp"></span><span id="briefStatus"></span></div>
       <div class="clogo" id="cLogo"></div>
+      <div class="refs" id="cRefs"></div>
       ${BRIEF_FIELDS.map(([g, hint, fields]) => `<div class="fgroup"><h3>${g}${hint ? `<span class="note" style="font-weight:400">${hint}</span>` : ""}</h3><div class="form">
         ${fields.map(([k, label, ph, rows, req, lock]) => `<label class="f ${lock ? "lockf" : ""}" ${rows >= 2 && !lock ? 'style="grid-column:1/-1"' : ""}><span>${label}${req ? ' <span class="req">*</span>' : ""}</span>${rows >= 2 ? `<textarea data-b="${k}" rows="${rows}" placeholder="${esc(ph || "")}"></textarea>` : `<input type="text" data-b="${k}" placeholder="${esc(ph || "")}">`}</label>`).join("")}
       </div></div>`).join("")}
@@ -1251,7 +1271,7 @@ function renderContent(force) {
     <div class="stickybar" id="importBar" hidden><span id="importInfo"></span><span class="sp"></span><button class="btn" id="cClearSel">取消</button><button class="btn pri" id="mockBtn">出 Mockup</button></div>`;
     bindContent();
   }
-  syncBrief(); renderCLogo(); renderPersonas(); renderDir(); renderCGen(); renderCards(); renderCFinals();
+  syncBrief(); renderCLogo(); renderRefs(); renderPersonas(); renderDir(); renderCGen(); renderCards(); renderCFinals();
 }
 
 function syncBrief() {
@@ -1330,7 +1350,8 @@ function rowHtml(it) {
     </div>
     <label class="cfield"><span>图上文字（Tag / Hook / Highlight / Body / Offer / CTA）</span><textarea data-f="content" rows="8">${esc(it.content)}</textarea></label>
     <div class="cfield"><label class="cfield"><span>主视觉（一个物件 / 场景）</span><textarea data-f="visual" rows="4">${esc(it.visual)}</textarea></label>
-      <select data-f="family" aria-label="风格家族">${FAM_KEYS.map((k) => `<option value="${k}" ${(it.family || "auto") === k ? "selected" : ""}>${FAM_LABEL[k]}</option>`).join("")}</select></div>
+      <select data-f="family" aria-label="风格家族">${FAM_KEYS.map((k) => `<option value="${k}" ${(it.family || "auto") === k ? "selected" : ""}>${FAM_LABEL[k]}</option>`).join("")}</select>
+      ${refPicker(it)}</div>
     <div class="cmock">${mockHtml(it)}<button class="btn sm bad" data-del1 style="align-self:flex-start">删除这张内容</button></div>
   </div>`;
 }
@@ -1423,6 +1444,61 @@ async function mockup(ids) {
   fire("/api/content/mockup", { id: c.id, ids }).then(() => poll()).catch((e) => { toast(e.message); if (/Logo/.test(e.message)) $("#briefCard").scrollIntoView({ behavior: "smooth" }); });
 }
 
+/* ---------- reference photos (讲师 / 产品 / 地点 / 仪器 …) ---------- */
+const REF_KINDS = ["讲师", "人物", "产品", "地点", "仪器", "其他"];
+const refsOf = () => (cur()?.refs || []);
+async function refreshContent() { await flushContent(); S = { ...S, ...(await api("/api/state")) }; C = S.content; refsSig = ""; renderRefs(true); renderCards(true); }
+function shrinkImage(file, max = 1600) { // keep uploads under the hosting body limit
+  return new Promise((ok, no) => { const img = new Image(), u = URL.createObjectURL(file);
+    img.onload = () => { const k = Math.min(1, max / Math.max(img.width, img.height)), cv = document.createElement("canvas"); cv.width = Math.round(img.width * k); cv.height = Math.round(img.height * k); cv.getContext("2d").drawImage(img, 0, 0, cv.width, cv.height); URL.revokeObjectURL(u); ok(cv.toDataURL("image/jpeg", 0.88)); };
+    img.onerror = () => no(new Error("读不到这张照片")); img.src = u; });
+}
+let refsSig = "";
+function renderRefs(force) {
+  const c = cur(), el = $("#cRefs"); if (!c || !el) return;
+  const sig = JSON.stringify(refsOf().map((r) => [r.id, r.label])); if (!force && sig === refsSig && el.childElementCount) return; refsSig = sig;
+  el.innerHTML = `<div class="refs-hd"><b>素材照片</b><span class="note">讲师、产品、地点、仪器…放进来，出图时会照实放进画面。每张内容在右边选要用哪几张。</span><span class="sp"></span>
+      <select id="refKind" aria-label="照片类型">${REF_KINDS.map((k) => `<option>${k}</option>`).join("")}</select>
+      <label class="btn pri" style="cursor:pointer">+ 上传照片<input type="file" id="refFile" accept="image/png,image/jpeg,image/webp" multiple hidden></label></div>
+    <div class="refs-grid">${refsOf().map((r) => `<div class="ref" data-ref="${r.id}"><img src="${esc(r.url)}" alt="${esc(r.label)}" loading="lazy">
+        <select data-rl aria-label="类型">${REF_KINDS.map((k) => `<option ${k === r.label ? "selected" : ""}>${k}</option>`).join("")}</select>
+        <input type="text" data-rn value="${esc(r.note || "")}" placeholder="说明，例如：陈老师">
+        <button class="btn sm bad" data-rdel>删除</button></div>`).join("") || `<div class="note" style="padding:6px 2px">还没有素材照片。</div>`}</div>`;
+  $("#refFile").onchange = async (e) => {
+    const files = [...e.target.files]; if (!files.length) return; toast(`上传 ${files.length} 张…`);
+    for (const f of files) { try { const dataUrl = await shrinkImage(f); await api("/api/content/ref-add", { id: c.id, dataUrl, label: $("#refKind").value, note: "" }); } catch (err) { toast(err.message); } }
+    await refreshContent(); toast("素材照片已上传");
+  };
+  el.onchange = async (e) => { const box = e.target.closest("[data-ref]"); if (!box || !("rl" in e.target.dataset)) return; await api("/api/content/ref-update", { id: cur().id, refId: box.dataset.ref, label: e.target.value }); await refreshContent(); };
+  let t; el.oninput = (e) => { const box = e.target.closest("[data-ref]"); if (!box || !("rn" in e.target.dataset)) return; const r = refsOf().find((x) => x.id === box.dataset.ref); if (r) r.note = e.target.value; const v = e.target.value, rid = box.dataset.ref; clearTimeout(t); t = setTimeout(() => api("/api/content/ref-update", { id: cur().id, refId: rid, note: v }).then(() => renderCards(true)), 500); };
+  el.onclick = (e) => { const d = e.target.closest("[data-rdel]"); if (!d) return; const id = d.closest("[data-ref]").dataset.ref; confirm2(d, "删除", "确定？", async () => { await api("/api/content/ref-delete", { id: cur().id, refId: id }); await refreshContent(); }); };
+}
+function refPicker(it) {
+  const refs = refsOf(); if (!refs.length) return "";
+  const on = new Set(it.refs || []);
+  return `<div class="rpick"><span>这张用的素材（最多 6）</span><div>${refs.map((r) => `<button type="button" class="rchip ${on.has(r.id) ? "on" : ""}" data-rpick="${r.id}" title="${esc(r.label)}${r.note ? " · " + esc(r.note) : ""}"><img src="${esc(r.url)}" alt=""><span>${esc(r.note || r.label)}</span></button>`).join("")}</div></div>`;
+}
+document.addEventListener("click", (e) => {
+  const b = e.target.closest("[data-rpick]"); if (!b) return;
+  const row = b.closest("[data-cid]"), c = cur(), it = c && c.items.find((i) => i.id === row?.dataset.cid); if (!it) return;
+  const set = new Set(it.refs || []); if (set.has(b.dataset.rpick)) set.delete(b.dataset.rpick); else { if (set.size >= 6) return toast("一张最多 6 张素材"); set.add(b.dataset.rpick); }
+  it.refs = [...set]; b.classList.toggle("on", set.has(b.dataset.rpick)); dirty.add(it.id); saveContent();
+});
+/* ---------- ad copy under each final ---------- */
+const COPY_LABEL = { SLAP: "SLAP", AIDA: "AIDA", PAS: "PAS", BAB: "BAB", FAB: "FAB", "4P": "4P", HSO: "Hook-Story-Offer" };
+function copyHtml(a) {
+  const busy = (renderCFinals.writing || []).includes(a.id) || (!a.copy && !a.copyError && Date.now() - a.createdAt < 120000);
+  const sel = `<select data-copyst="${a.id}" aria-label="文案结构"><option value="auto">自动配结构</option>${Object.entries(COPY_LABEL).map(([k, l]) => `<option value="${k}" ${a.copy?.picked === k ? "selected" : ""}>${l}</option>`).join("")}</select><button class="btn sm" data-rewrite="${a.id}">${a.copy ? "重写" : "写文案"}</button>`;
+  if (busy && !a.copy) return `<div class="copy"><span class="note"><span class="spin"></span> AI 看图写文案中…</span></div>`;
+  if (!a.copy) return `<div class="copy">${a.copyError ? `<span class="err">文案没写成：${esc(a.copyError)}</span>` : ""}<div class="copy-act">${sel}</div></div>`;
+  const k = a.copy;
+  return `<div class="copy"><div class="copy-hd"><span class="pill info">${esc(COPY_LABEL[k.structure] || k.structure)}</span><span class="note">${esc(k.reason)}</span></div>
+    <div class="copy-f"><span>Primary Text</span><pre>${esc(k.primary)}</pre><button class="btn sm" data-copyf="primary" data-asset="${a.id}">复制</button></div>
+    <div class="copy-f"><span>Headline</span><pre>${esc(k.headline)}</pre><button class="btn sm" data-copyf="headline" data-asset="${a.id}">复制</button></div>
+    <div class="copy-f"><span>Description</span><pre>${esc(k.description)}</pre><button class="btn sm" data-copyf="description" data-asset="${a.id}">复制</button></div>
+    <div class="copy-act"><button class="btn sm pri" data-copyf="all" data-asset="${a.id}">全部复制</button><span class="sp"></span>${sel}</div></div>`;
+}
+
 function renderCLogo() {
   const B = S.brand || {}; const el = $("#cLogo"); if (!el) return;
   const sig = [B.locked, B.logoUrl].join("|"); if (el.dataset.sig === sig) return; el.dataset.sig = sig;
@@ -1440,13 +1516,21 @@ let cfSig = "";
 function renderCFinals() {
   const c = cur(); if (!c || !$("#cFinals")) return;
   const f = finalsOf(c), up = (window.__jobs || []).filter((j) => j.type === "upscale" && j.campaignId === c.id && active(j)).length;
-  const sig = JSON.stringify([up, f.map((a) => [a.id, a.canva])]); if (sig === cfSig && $("#cFinals").childElementCount) return; cfSig = sig;
+  const writing = (window.__jobs || []).filter((j) => j.type === "copy" && active(j)).map((j) => j.assetId);
+  const sig = JSON.stringify([up, writing, f.map((a) => [a.id, a.copy?.at, a.copyError])]); if (sig === cfSig && $("#cFinals").childElementCount) return; cfSig = sig; renderCFinals.writing = writing;
   $("#cfDlAll").disabled = !f.length; $("#cfDlAll").textContent = f.length ? `全部下载 ${f.length} 张` : "全部下载";
   $("#cFinals").innerHTML = f.length || up ? `<div class="finals">${Array.from({ length: up }, () => `<div class="fin"><div class="ph"><span class="spin"></span></div><span class="note">Upscaling…</span></div>`).join("")}${f.map((a) => `<div class="fin"><button class="th" data-cfopen="${a.id}"><img src="${esc(a.file)}" alt="${esc(a.creativeId)}" loading="lazy"></button>
       <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap"><span class="id" style="background:var(--accent-soft);color:var(--accent)">${esc(a.creativeId)}</span><span class="note">${esc(c.items.find((i) => i.id === a.rowId)?.personaName || "")}</span></div>
-      <div class="finact"><button class="btn sm" data-cfopen="${a.id}">预览</button><a class="btn sm" href="${esc(a.file)}" download="${esc(a.creativeId)}.${esc(a.file.split(".").pop())}">下载</a></div></div>`).join("")}</div>`
+      <div class="finact"><button class="btn sm" data-cfopen="${a.id}">预览</button><a class="btn sm" href="${esc(a.file)}" download="${esc(a.creativeId)}.${esc(a.file.split(".").pop())}">下载</a></div>${copyHtml(a)}</div>`).join("")}</div>`
     : `<div class="empty">还没有正式图。在上面的 Mockup 按「Upscale」。</div>`;
-  $("#cFinals").onclick = (e) => { const o = e.target.closest("[data-cfopen]"); if (o) openLb(o.dataset.cfopen, finalsOf(c)); };
+  $("#cFinals").onclick = async (e) => {
+    const o = e.target.closest("[data-cfopen]"); if (o) return openLb(o.dataset.cfopen, finalsOf(c));
+    const cp = e.target.closest("[data-copyf]");
+    if (cp) { const a = S.assets.find((x) => x.id === cp.dataset.asset); const txt = cp.dataset.copyf === "all" ? `${a.copy.primary}\n\nHeadline: ${a.copy.headline}\nDescription: ${a.copy.description}` : a.copy[cp.dataset.copyf];
+      try { await navigator.clipboard.writeText(txt); toast("已复制"); } catch { toast("复制不了，请手动选取"); } return; }
+    const rw = e.target.closest("[data-rewrite]");
+    if (rw) { const id = rw.dataset.rewrite, st = $(`[data-copyst="${id}"]`).value; toast("重新写文案中…"); fire("/api/copy", { assetId: id, structure: st }).then(async () => { S = { ...S, ...(await api("/api/state")) }; C = S.content; cfSig = ""; renderCFinals(); toast("文案好了"); }).catch((err) => toast(err.message)); }
+  };
   $("#cfDlAll").onclick = async () => {
     const list = finalsOf(c); if (!list.length) return; if (window.WAO_DEMO) return toast("展示版不能下载；在你电脑上的 app 可以");
     for (const a of list) { const l = document.createElement("a"); l.href = a.file; l.download = a.creativeId + "." + a.file.split(".").pop(); document.body.appendChild(l); l.click(); l.remove(); await new Promise((r) => setTimeout(r, 350)); }
