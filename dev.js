@@ -1,5 +1,7 @@
 // Local preview of the hosted version: node dev.js → http://localhost:3000
 // Without Redis/Blob env vars it stores everything in ./.local (same behaviour, no cloud needed).
+// optional local.env (KEY=VALUE per line) so start.bat works without setting env vars by hand
+try { for (const line of require("fs").readFileSync(require("path").join(__dirname, "local.env"), "utf8").split(/\r?\n/)) { const m = line.match(/^\s*([A-Z_]+)\s*=\s*(.*?)\s*$/); if (m && !process.env[m[1]]) process.env[m[1]] = m[2]; } } catch {}
 const http = require("http");
 const fs = require("fs");
 const path = require("path");
