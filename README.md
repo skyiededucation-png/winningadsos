@@ -34,9 +34,9 @@
 - **Mock 模式**（设定里打开）：不叫 API、不花钱，出假图测试流程。
 - **改内容规则**：改 `docs/CONTENT-SKILL.md`，push 上 GitHub 就会自动重新部署。
 
-## 本地预览（可选）
+## 在电脑上跑（不用 Vercel）
 
-```
-node dev.js        # → http://localhost:3000，资料存在 ./.local
-APP_PASSWORD=xxx AI_API_KEY=xxx node dev.js
-```
+1. 电脑要有 Node.js。
+2. 双击 **start.bat**，浏览器会打开 http://localhost:3000。
+3. 第一次会自动建立 `local.env`：填 `AI_API_KEY`（和 `AI_API_BASE`，用别家 API 才要），保存后重开 start.bat。
+4. 资料存在 `.local` 资料夹。如果这个资料夹里有旧版 app 的 `data` 和 `output`，第一次开会自动导入旧的 Logo、Campaign 和图片，也会沿用旧版设定里的 API key。
